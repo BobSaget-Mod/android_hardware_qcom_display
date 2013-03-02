@@ -1,3 +1,4 @@
+
 /*
  * Copyright (C) 2010 The Android Open Source Project
  * Copyright (C) 2012, The Linux Foundation. All rights reserved.
@@ -47,6 +48,7 @@ namespace qhwc {
 
 #define SYSFS_EDID_MODES        DEVICE_ROOT "/" DEVICE_NODE "/edid_modes"
 #define SYSFS_HPD               DEVICE_ROOT "/" DEVICE_NODE "/hpd"
+
 
 ExternalDisplay::ExternalDisplay(hwc_context_t* ctx):mFd(-1),
     mCurrentMode(-1), mExternalDisplay(0), mModeCount(0), mHwcContext(ctx)
@@ -439,18 +441,16 @@ bool ExternalDisplay::writeHPDOption(int userOption) const
 
 /*
  * commits the changes to the external display
+ * mExternalDisplay has the mixer number(1-> HDMI 2-> WFD)
  */
 bool ExternalDisplay::post()
 {
-    if(mFd == -1)
+    if(mFd == -1) {
         return false;
-    struct mdp_display_commit ext_commit;
-    memset(&ext_commit, 0, sizeof(struct mdp_display_commit));
-    ext_commit.flags = MDP_DISPLAY_COMMIT_OVERLAY;
-    if (ioctl(mFd, MSMFB_DISPLAY_COMMIT, &ext_commit) == -1) {
-        ALOGE("%s: MSMFB_DISPLAY_COMMIT for external failed, str: %s",
-                __FUNCTION__, strerror(errno));
-        return false;
+    } else if(ioctl(mFd, MSMFB_OVERLAY_COMMIT, &mExternalDisplay) == -1) {
+         ALOGE("%s: MSMFB_OVERLAY_COMMIT failed, str: %s", __FUNCTION__,
+                                                          strerror(errno));
+         return false;
     }
     return true;
 }
